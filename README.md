@@ -12,10 +12,16 @@ go build -o smg ./cmd/smg
 On Linux you need Fyne's build deps, e.g. on Fedora:
 `sudo dnf install mesa-libGL-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel`
 
+## Install
+Prebuilt binaries for Linux and macOS (amd64/arm64) are attached to each
+[GitHub release](https://github.com/AzarAI-TOP/Set-My-Ghostty/releases). Download
+the archive for your platform, extract, and put `smg` on your `PATH`.
+
 ## Usage
 ```
 smg                      # auto-detect config
 smg --config /path/file  # explicit file
+smg --version            # print version
 ```
 Tabs: Appearance, Font, Keymaps, Window & Behavior, and a Raw editor. Saving
 writes a `.bak` backup first and validates with `ghostty` when available.

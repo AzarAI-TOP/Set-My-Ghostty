@@ -10,9 +10,18 @@ import (
 	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/ui"
 )
 
+// version is set at build time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
 	configPath := flag.String("config", "", "path to ghostty config file (default: auto-detect)")
+	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("smg", version)
+		return
+	}
 
 	path, err := config.ResolvePath(*configPath)
 	if err != nil {
