@@ -1,0 +1,12 @@
+# Binaries
+smg
+/smg
+
+# Test/build artifacts
+*.test
+*.out
+dist/
+
+# OS/editor
+.DS_Store
+*.bak
