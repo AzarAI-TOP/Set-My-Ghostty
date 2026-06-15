@@ -5,14 +5,22 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/config"
+	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/ui"
 )
 
 func main() {
 	configPath := flag.String("config", "", "path to ghostty config file (default: auto-detect)")
 	flag.Parse()
 
-	// UI wiring is added in a later task; for now just prove the binary builds.
-	if *configPath != "" {
-		fmt.Fprintf(os.Stdout, "smg: using config %s\n", *configPath)
+	path, err := config.ResolvePath(*configPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "smg:", err)
+		os.Exit(1)
+	}
+	if err := ui.Run(path); err != nil {
+		fmt.Fprintln(os.Stderr, "smg:", err)
+		os.Exit(1)
 	}
 }
