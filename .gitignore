@@ -1,5 +1,4 @@
-# Binaries
-smg
+# Binaries (root build output only; do not ignore cmd/smg/)
 /smg
 
 # Test/build artifacts
