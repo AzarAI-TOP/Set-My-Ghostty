@@ -207,6 +207,24 @@ func TestModelInteractionScalarThenListSameKey(t *testing.T) {
 	}
 }
 
+func TestDiscardPendingClearsAllPendingKinds(t *testing.T) {
+	m := newModel(t, "")
+	m.SetValue("theme", "nord")
+	m.SetList("font-feature", []string{"-liga"})
+	m.SetKeybind("copy_to_clipboard", "ctrl+c")
+	if !m.Dirty() {
+		t.Fatal("model should be dirty after staging edits")
+	}
+	m.DiscardPending()
+	if m.Dirty() {
+		t.Error("model should be clean after DiscardPending")
+	}
+	if len(m.pendingScalar) != 0 || len(m.pendingList) != 0 || len(m.pendingKeybinds) != 0 {
+		t.Errorf("pending maps not cleared: scalar=%d list=%d keybinds=%d",
+			len(m.pendingScalar), len(m.pendingList), len(m.pendingKeybinds))
+	}
+}
+
 // ── Keybind Model tests ─────────────────────────────────────────────────
 
 func TestKeybindFromDoc(t *testing.T) {
@@ -272,17 +290,46 @@ func TestKeybindApplyFlushesToDoc(t *testing.T) {
 	}
 }
 
-func TestKeybindApplyOverwritesExisting(t *testing.T) {
+func TestKeybindApplyAddsWithoutRemovingExisting(t *testing.T) {
 	m := newModel(t, "keybind = ctrl+c=old_action\n")
-	m.SetKeybind("new_action", "ctrl+c")
+	m.SetKeybind("new_action", "ctrl+v")
 	m.Apply()
 	m2 := m.Doc.KeybindMap()
-	// ctrl+c should now point to new_action, not old_action
-	if m2["new_action"] != "ctrl+c" {
-		t.Errorf("new_action trigger = %q", m2["new_action"])
+	if m2["new_action"] != "ctrl+v" {
+		t.Errorf("new_action trigger = %q, want ctrl+v", m2["new_action"])
 	}
-	if _, ok := m2["old_action"]; ok {
-		t.Error("old_action should have been removed")
+	// Editing/adding one action must not delete an unrelated existing binding.
+	if m2["old_action"] != "ctrl+c" {
+		t.Errorf("old_action trigger = %q, want ctrl+c (must be preserved)", m2["old_action"])
+	}
+}
+
+func TestKeybindApplyRebindsExistingAction(t *testing.T) {
+	m := newModel(t, "keybind = ctrl+c=copy_to_clipboard\n")
+	m.SetKeybind("copy_to_clipboard", "super+c")
+	m.Apply()
+	if got := m.Doc.KeybindMap()["copy_to_clipboard"]; got != "super+c" {
+		t.Errorf("copy_to_clipboard = %q, want super+c", got)
+	}
+}
+
+func TestKeybindApplyPreservesUneditedBindings(t *testing.T) {
+	src := "keybind = ctrl+c=copy_to_clipboard\n" +
+		"keybind = ctrl+v=paste_from_clipboard\n" +
+		"keybind = ctrl+t=new_tab\n"
+	m := newModel(t, src)
+	// User edits exactly one keybind.
+	m.SetKeybind("new_tab", "ctrl+shift+t")
+	m.Apply()
+	kb := m.Doc.KeybindMap()
+	if kb["copy_to_clipboard"] != "ctrl+c" {
+		t.Errorf("copy_to_clipboard = %q, want ctrl+c (unedited binding lost)", kb["copy_to_clipboard"])
+	}
+	if kb["paste_from_clipboard"] != "ctrl+v" {
+		t.Errorf("paste_from_clipboard = %q, want ctrl+v (unedited binding lost)", kb["paste_from_clipboard"])
+	}
+	if kb["new_tab"] != "ctrl+shift+t" {
+		t.Errorf("new_tab = %q, want ctrl+shift+t", kb["new_tab"])
 	}
 }
 

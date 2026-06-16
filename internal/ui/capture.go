@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"sort"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -11,8 +10,6 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/schema"
 )
 
 // showKeyCaptureDialog opens a modal popup that listens for a key combination
@@ -137,18 +134,27 @@ func showKeyCaptureDialog(actionLabel, action, currentTrigger string, onSet func
 		focusEntry,
 	)
 
+	// d is referenced by the button handlers below, so declare it first and
+	// assign once the content (which embeds the buttons) is built.
+	var d *dialog.CustomDialog
+
 	setBtn := widget.NewButtonWithIcon("Set", theme.ConfirmIcon(), func() {
 		restoreHandlers()
-		if trigger != "" {
+		// Require a real key, not a modifier-only combo (e.g. just "ctrl"),
+		// which ghostty would reject as an invalid trigger.
+		if mainKey != "" {
 			onSet(trigger)
 		}
+		d.Hide()
 	})
 	clearBtn := widget.NewButton("Clear", func() {
 		restoreHandlers()
 		onSet("")
+		d.Hide()
 	})
 	cancelBtn := widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), func() {
 		restoreHandlers()
+		d.Hide()
 	})
 
 	buttons := container.NewHBox(
@@ -158,7 +164,7 @@ func showKeyCaptureDialog(actionLabel, action, currentTrigger string, onSet func
 		cancelBtn,
 	)
 
-	d := dialog.NewCustomWithoutButtons("Set shortcut", container.NewBorder(
+	d = dialog.NewCustomWithoutButtons("Set shortcut", container.NewBorder(
 		content, buttons, nil, nil, nil,
 	), parent)
 	d.Resize(fyne.NewSize(380, 280))
@@ -239,37 +245,3 @@ func cleanKeyName(name string) string {
 	return strings.ToLower(name)
 }
 
-// groupActions groups keymap actions by category for stable UI rendering.
-type actionGroup struct {
-	Category string
-	Actions  []schema.KeymapAction
-}
-
-func groupByCategory(actions []schema.KeymapAction) []actionGroup {
-	catOrder := []schema.ActionGroup{
-		schema.GroupClipboard, schema.GroupSplits, schema.GroupTabs,
-		schema.GroupNavigation, schema.GroupTerminal, schema.GroupView,
-		schema.GroupFont, schema.GroupInspector,
-	}
-	groups := make(map[schema.ActionGroup][]schema.KeymapAction)
-	for _, a := range actions {
-		groups[a.Category] = append(groups[a.Category], a)
-	}
-	var result []actionGroup
-	for _, c := range catOrder {
-		if acts, ok := groups[c]; ok {
-			result = append(result, actionGroup{Category: string(c), Actions: acts})
-		}
-	}
-	return result
-}
-
-// sortedActionKeys returns sorted keys of a map for deterministic iteration.
-func sortedActionKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}

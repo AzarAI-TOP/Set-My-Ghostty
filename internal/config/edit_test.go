@@ -361,6 +361,28 @@ func TestSetKeybinds(t *testing.T) {
 	}
 }
 
+func TestSetKeybindsIsDeterministicallyOrdered(t *testing.T) {
+	m := map[string]string{
+		"new_tab":              "ctrl+t",
+		"copy_to_clipboard":    "ctrl+c",
+		"paste_from_clipboard": "ctrl+v",
+		"clear_screen":         "super+k",
+	}
+	var first string
+	for i := 0; i < 20; i++ {
+		doc := Parse([]byte("theme = dracula\n"))
+		doc.SetKeybinds(m)
+		out := string(doc.Bytes())
+		if i == 0 {
+			first = out
+			continue
+		}
+		if out != first {
+			t.Fatalf("non-deterministic keybind ordering:\n run0: %q\n run%d: %q", first, i, out)
+		}
+	}
+}
+
 func TestSetKeybindsSkipsEmptyTrigger(t *testing.T) {
 	doc := Parse([]byte("theme = dracula\n"))
 	doc.SetKeybinds(map[string]string{

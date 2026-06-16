@@ -79,8 +79,23 @@ func (m *Model) Apply() {
 		m.Doc.SetRepeatable(k, vs)
 	}
 	if len(m.pendingKeybinds) > 0 {
-		m.Doc.SetKeybinds(m.pendingKeybinds)
+		// Start from every binding already in the document so that editing one
+		// keybind never drops the others, then layer the pending edits on top.
+		binds := m.Doc.KeybindMap()
+		for action, trigger := range m.pendingKeybinds {
+			if trigger == "" {
+				delete(binds, action)
+			} else {
+				binds[action] = trigger
+			}
+		}
+		m.Doc.SetKeybinds(binds)
 	}
+	m.DiscardPending()
+}
+
+// DiscardPending drops all staged edits without writing them to the document.
+func (m *Model) DiscardPending() {
 	m.pendingScalar = map[string]string{}
 	m.pendingList = map[string][]string{}
 	m.pendingKeybinds = map[string]string{}

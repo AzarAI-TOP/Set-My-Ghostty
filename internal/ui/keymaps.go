@@ -202,5 +202,3 @@ func groupByAction(items []visibleAction) []groupedActions {
 	}
 	return result
 }
-
-var _ = sortedActionKeys // keep import alive
