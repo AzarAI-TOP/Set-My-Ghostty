@@ -9,6 +9,11 @@ import (
 // the document. If the backup cannot be written, the save is aborted and the
 // original file is left untouched.
 func Save(path string, d *Document) error {
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
 	if existing, err := os.ReadFile(path); err == nil {
 		if err := os.WriteFile(path+".bak", existing, 0o644); err != nil {
 			return err

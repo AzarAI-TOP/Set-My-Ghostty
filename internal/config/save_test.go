@@ -6,6 +6,24 @@ import (
 	"testing"
 )
 
+func TestSaveCreatesMissingParentDirectories(t *testing.T) {
+	dir := t.TempDir()
+	// Mirrors a first-run path like ~/.config/ghostty/config where the
+	// ghostty directory does not exist yet.
+	path := filepath.Join(dir, "ghostty", "config")
+	doc := Parse([]byte("theme = nord\n"))
+	if err := Save(path, doc); err != nil {
+		t.Fatalf("Save into missing dir: %v", err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+	if string(got) != "theme = nord\n" {
+		t.Errorf("file = %q", got)
+	}
+}
+
 func TestSaveWritesBackupThenFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config")

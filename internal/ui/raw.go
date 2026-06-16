@@ -13,8 +13,7 @@ func (a *App) rawTab() *container.TabItem {
 
 	applyRaw := widget.NewButton("Apply raw text", func() {
 		a.model.Doc = config.Parse([]byte(entry.Text))
-		a.model.pendingScalar = map[string]string{}
-		a.model.pendingList = map[string][]string{}
+		a.model.DiscardPending()
 		a.infof("Raw text applied in memory — press Save to write the file")
 	})
 	reload := widget.NewButton("Refresh from form edits", func() {

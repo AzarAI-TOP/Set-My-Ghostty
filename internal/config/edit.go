@@ -1,6 +1,9 @@
 package config
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // Get returns the value of the first KeyValue line with the given key.
 func (d *Document) Get(key string) (string, bool) {
@@ -114,12 +117,17 @@ func (d *Document) KeybindMap() map[string]string {
 // action → trigger map.  Entries with an empty trigger are skipped
 // (the action is unbound).
 func (d *Document) SetKeybinds(m map[string]string) {
+	actions := make([]string, 0, len(m))
+	for action := range m {
+		actions = append(actions, action)
+	}
+	sort.Strings(actions) // deterministic output, stable diffs
 	var values []string
-	for action, trigger := range m {
-		if trigger == "" {
+	for _, action := range actions {
+		if m[action] == "" {
 			continue
 		}
-		values = append(values, BuildKeybind(trigger, action))
+		values = append(values, BuildKeybind(m[action], action))
 	}
 	d.SetRepeatable("keybind", values)
 }
