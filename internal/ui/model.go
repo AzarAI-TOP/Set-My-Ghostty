@@ -11,17 +11,19 @@ type Model struct {
 	Doc    *config.Document
 	Schema *schema.Schema
 
-	pendingScalar map[string]string
-	pendingList   map[string][]string
+	pendingScalar  map[string]string
+	pendingList    map[string][]string
+	pendingKeybinds map[string]string // action → trigger; "" means unset
 }
 
 // NewModel builds a model over a document and schema.
 func NewModel(doc *config.Document, s *schema.Schema) *Model {
 	return &Model{
-		Doc:           doc,
-		Schema:        s,
-		pendingScalar: map[string]string{},
-		pendingList:   map[string][]string{},
+		Doc:             doc,
+		Schema:          s,
+		pendingScalar:   map[string]string{},
+		pendingList:     map[string][]string{},
+		pendingKeybinds: map[string]string{},
 	}
 }
 
@@ -65,7 +67,7 @@ func (m *Model) SetList(key string, values []string) {
 
 // Dirty reports whether there are unsaved edits.
 func (m *Model) Dirty() bool {
-	return len(m.pendingScalar) > 0 || len(m.pendingList) > 0
+	return len(m.pendingScalar) > 0 || len(m.pendingList) > 0 || len(m.pendingKeybinds) > 0
 }
 
 // Apply flushes all pending edits into the document and clears them.
@@ -76,6 +78,37 @@ func (m *Model) Apply() {
 	for k, vs := range m.pendingList {
 		m.Doc.SetRepeatable(k, vs)
 	}
+	if len(m.pendingKeybinds) > 0 {
+		m.Doc.SetKeybinds(m.pendingKeybinds)
+	}
 	m.pendingScalar = map[string]string{}
 	m.pendingList = map[string][]string{}
+	m.pendingKeybinds = map[string]string{}
+}
+
+// ── Keybind helpers ─────────────────────────────────────────────────────
+
+// Keybind returns the current trigger for an action: pending edit, else the
+// document value, else "".
+func (m *Model) Keybind(action string) string {
+	if v, ok := m.pendingKeybinds[action]; ok {
+		return v
+	}
+	// Look through the current document bindings.
+	for k, v := range m.Doc.KeybindMap() {
+		if k == action {
+			return v
+		}
+	}
+	return ""
+}
+
+// SetKeybind stages a keybind edit. If trigger is empty the action is unbound.
+func (m *Model) SetKeybind(action, trigger string) {
+	m.pendingKeybinds[action] = trigger
+}
+
+// ClearKeybind removes a pending keybind edit entirely.
+func (m *Model) ClearKeybind(action string) {
+	delete(m.pendingKeybinds, action)
 }

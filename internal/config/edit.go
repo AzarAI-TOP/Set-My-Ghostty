@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 // Get returns the value of the first KeyValue line with the given key.
 func (d *Document) Get(key string) (string, bool) {
 	for _, l := range d.Lines {
@@ -75,4 +77,49 @@ func (d *Document) SetRepeatable(key string, values []string) {
 func (d *Document) append(key, value string) {
 	d.Lines = append(d.Lines, Line{Kind: KindKeyValue, Key: key, Value: value, dirty: true})
 	d.trailingNewline = true
+}
+
+// ── Keybind helpers ─────────────────────────────────────────────────────
+
+// ParseKeybind splits a raw keybind value ("trigger=action") into its parts.
+// It returns ok=false if the string has no '=' separator.
+func ParseKeybind(raw string) (trigger, action string, ok bool) {
+	if !strings.Contains(raw, "=") {
+		return "", "", false
+	}
+	parts := strings.SplitN(raw, "=", 2)
+	return parts[0], parts[1], true
+}
+
+// BuildKeybind joins trigger and action into "trigger=action".
+func BuildKeybind(trigger, action string) string {
+	return trigger + "=" + action
+}
+
+// KeybindMap returns all keybinds as action → trigger.
+// If the same action appears multiple times the last value wins.
+func (d *Document) KeybindMap() map[string]string {
+	m := make(map[string]string)
+	for _, l := range d.Lines {
+		if l.Kind == KindKeyValue && l.Key == "keybind" {
+			if trigger, action, ok := ParseKeybind(l.Value); ok {
+				m[action] = trigger
+			}
+		}
+	}
+	return m
+}
+
+// SetKeybinds replaces all keybind lines with ones built from the
+// action → trigger map.  Entries with an empty trigger are skipped
+// (the action is unbound).
+func (d *Document) SetKeybinds(m map[string]string) {
+	var values []string
+	for action, trigger := range m {
+		if trigger == "" {
+			continue
+		}
+		values = append(values, BuildKeybind(trigger, action))
+	}
+	d.SetRepeatable("keybind", values)
 }

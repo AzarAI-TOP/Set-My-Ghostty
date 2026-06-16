@@ -1,6 +1,7 @@
 package ui
 
 import (
+	_ "embed"
 	"fmt"
 
 	"fyne.io/fyne/v2"
@@ -12,6 +13,9 @@ import (
 	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/ghostty"
 	"github.com/AzarAI-TOP/Set-My-Ghostty/internal/schema"
 )
+
+//go:embed smg.png
+var iconData []byte
 
 // App owns the window, the form-model, and discovered data shared across tabs.
 type App struct {
@@ -56,6 +60,7 @@ func Run(path string) error {
 	}
 
 	fa := fyneapp.NewWithID("top.azarai.smg")
+	fa.SetIcon(fyne.NewStaticResource("smg", iconData))
 	a.win = fa.NewWindow("Set-My-Ghostty")
 	a.status.SetText("Editing " + path)
 	if !cli.Available() {

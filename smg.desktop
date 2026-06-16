@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Set-My-Ghostty
+GenericName=Ghostty Config Editor
+Comment=GUI editor for Ghostty terminal configuration
+Exec=smg
+Icon=smg
+Categories=TerminalEmulator;Utility;Settings;DesktopSettings;
+Terminal=false
+StartupNotify=true
+Keywords=ghostty;terminal;config;settings;
