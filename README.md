@@ -14,8 +14,13 @@ On Linux you need Fyne's build deps, e.g. on Fedora:
 
 ## Install
 Prebuilt binaries for Linux and macOS (amd64/arm64) are attached to each
-[GitHub release](https://github.com/AzarAI-TOP/Set-My-Ghostty/releases). Download
-the archive for your platform, extract, and put `smg` on your `PATH`.
+[GitHub release](https://github.com/AzarAI-TOP/Set-My-Ghostty/releases). The latest
+release is **[v1.0.1](https://github.com/AzarAI-TOP/Set-My-Ghostty/releases/tag/v1.0.1)**.
+Download the archive for your platform, extract, and put `smg` on your `PATH`:
+```
+tar -xzf smg_v1.0.1_linux_amd64.tar.gz
+sudo install smg /usr/local/bin/
+```
 
 ## Usage
 ```
