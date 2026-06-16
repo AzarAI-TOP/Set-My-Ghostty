@@ -45,7 +45,10 @@ func (r *tappableRow) CreateRenderer() fyne.WidgetRenderer {
 	nameLabel := widget.NewLabel(r.name)
 	nameLabel.Wrapping = fyne.TextTruncate
 
-	content := container.NewBorder(nil, nil, nameLabel, nil, triggerLabel)
+	// nameLabel must be the expanding center object: a truncating label in a
+	// Border left/right slot collapses to its (tiny) min width and shows
+	// nothing. Pin the trigger to the right instead.
+	content := container.NewBorder(nil, nil, nil, triggerLabel, nameLabel)
 	return widget.NewSimpleRenderer(content)
 }
 
